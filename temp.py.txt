@@ -1,0 +1,56 @@
+import os
+import time
+
+FAN_GPIO = "/sys/class/gpio/gpioXX"  # Replace with the actual GPIO number
+
+def export_gpio(gpio_path):
+    try:
+        with open("/sys/class/gpio/export", "w") as export_file:
+            export_file.write(gpio_path.split("/")[-1])
+    except IOError:
+        pass
+
+def set_fan_speed(speed_percentage):
+    # Ensure speed is within a valid range (0-100)
+    speed_percentage = max(0, min(100, speed_percentage))
+
+    # Export the GPIO pin if not already exported
+    export_gpio(FAN_GPIO)
+
+    # Set the direction to 'out'
+    with open(FAN_GPIO + "/direction", "w") as direction_file:
+        direction_file.write("out")
+
+    # Calculate the on and off times based on speed_percentage
+    on_time = speed_percentage / 100
+    off_time = 1 - on_time
+
+    # Turn the fan on and off in a loop
+    while True:
+        with open(FAN_GPIO + "/value", "w") as value_file:
+            value_file.write("1")
+        time.sleep(on_time)
+        with open(FAN_GPIO + "/value", "w") as value_file:
+            value_file.write("0")
+        time.sleep(off_time)
+
+def read_temperature():
+    # Your code here to read the temperature from the sensor
+    # Example: You can use a command or a file to read temperature
+    # Replace the following line with your actual command or code
+    temperature_str = os.popen("cat /sys/class/thermal/thermal_zone0/temp").read()
+    temperature = int(temperature_str) / 1000  # Convert to Celsius
+    return temperature
+
+def main():
+    temperature = read_temperature()
+    if temperature > 60:  # Adjust the threshold as needed
+        set_fan_speed(100)  # Set fan to full speed
+    elif temperature > 50:
+        set_fan_speed(75)  # Set fan to 75% speed
+    else:
+        set_fan_speed(50)  # Set fan to 50% speed
+
+if __name__ == "__main__":
+    main()
+

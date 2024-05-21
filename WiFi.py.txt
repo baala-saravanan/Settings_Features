@@ -1,0 +1,37 @@
+import subprocess
+import sys
+
+def delete_line_in_file(file_path, line_to_delete):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+    with open(file_path, 'w') as file:
+        for line in lines:
+            if line.strip() != line_to_delete:
+                file.write(line)
+
+def connect_to_wifi(ssid, data):
+    try:
+        command = f"nmcli device wifi connect '{ssid}' password '{data}'"
+        output = subprocess.check_output(command, shell=True, text=True)
+        print('output:', output)
+        error_message = "Error: Connection activation failed: (7) Secrets were required, but not provided."
+        if error_message in output:
+            print('TRUE')
+            file_path = '/home/rock/Desktop/Hearsight/network_error.txt'
+            line_to_delete = f"SSID: {ssid}, Password: {data}"
+            delete_line_in_file(file_path, line_to_delete)  # You need to define these variables
+            print('FALSE')
+        else:
+            print('CONNECTED TO YOUR NETWORK SUCCESSFULLY')
+            return True
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e}")
+        sys.exit()
+    except Exception as e:
+        print(f"An error occurred during WiFi connection: {e}")
+        sys.exit()
+
+# Example usage
+ssid_input = input("Enter the SSID: ")
+password_input = input("Enter the password: ")
+connect_to_wifi(ssid_input, password_input)
